@@ -10,4 +10,12 @@
                  [com.amazonaws/aws-lambda-java-core "1.1.0"]
                  [com.amazonaws/aws-java-sdk-lambda "1.11.179"]
                  [com.cognitect/transit-clj "0.8.300"]]
+  :release-tasks [["vcs" "assert-committed"]
+                  ["change" "version" "leiningen.release/bump-version" "release"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag"]
+                  ["deploy" "clojars"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "push"]]
   :aot :all)
