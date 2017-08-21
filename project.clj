@@ -10,4 +10,6 @@
                  [com.amazonaws/aws-lambda-java-core "1.1.0"]
                  [com.amazonaws/aws-java-sdk-lambda "1.11.179"]
                  [com.cognitect/transit-clj "0.8.300"]]
-  :aot :all)
+  :plugins [[lein-release "1.0.5"]]
+  :aot :all
+  :lein-release {:deploy-via :clojars})
