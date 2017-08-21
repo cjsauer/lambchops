@@ -8,16 +8,17 @@
 
 (defn qualify
   [class-name]
-  (str *ns* "." class-name))
+  (let [ns (s/replace (str *ns*) #"-" "_")]
+    (str ns "." class-name)))
 
 (defn make-lambda
   [class-name fn-name handler-fn]
-  (defn- -handleRequest [this in out ctx]
-    (let [reader (transit/reader in :json)
-          writer (transit/writer out :json)]
-      (->> (transit/read reader)
-           handler-fn
-           (transit/write writer))))
+  (eval `(defn ~'-handleRequest [this# in# out# ctx#]
+           (let [reader# (transit/reader in# :json)
+                 writer# (transit/writer out# :json)]
+             (->> (transit/read reader#)
+                  ~handler-fn
+                  (transit/write writer#)))))
   (eval `(gen-class
           :name ~(-> class-name qualify symbol)
           :implements [com.amazonaws.services.lambda.runtime.RequestStreamHandler]))
@@ -48,7 +49,3 @@
   [fname args & body]
   (let [class-name (camel-case fname)]
     `(make-lambda ~class-name ~(str fname) (fn ~args ~@body))))
-
-(deflambda hello-world
-  [data]
-  (str "Hello, " (get data "name") "!"))
