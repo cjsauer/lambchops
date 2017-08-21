@@ -6,42 +6,36 @@
   (:import [com.amazonaws.services.lambda.runtime RequestStreamHandler Context]
            [java.io ByteArrayOutputStream]))
 
-(defn- parse-lambda-sym
-  "Parses the symbol argument passed to the deflambda macro
-  into [class-name fn-name]."
-  [sym]
-  (-> sym str (split #"\.")))
+(defn qualify
+  [class-name]
+  (str *ns* "." class-name))
 
-;; (defn make-lambda
-;;   [class-name fn-name handler-fn]
-;;   (defn- -handleRequest [this in out ctx]
-;;     (let [reader (transit/reader in :json)
-;;           writer (transit/writer out :json)]
-;;       (->> (transit/read reader)
-;;            handler-fn
-;;            (transit/write writer))))
-;;   (eval `(gen-class
-;;           :name ~class-name
-;;           :implements [com.amazonaws.services.lambda.runtime.RequestStreamHandler]))
-;;   (eval `(defn ~(symbol fn-name)
-;;            [~'x]
-;;            (with-open [~'os (ByteArrayOutputStream. 4096)]
-;;              (let [~'writer (transit/writer ~'os :json)]
-;;                (transit/write ~'writer ~'x)
-;;                (invoke :function-name ~fn-name
-;;                        :payload (.toString ~'os)))))))
-
-;; (defrecord HelloWorld [ifn]
-;;   RequestStreamHandler
-;;   (handleRequest [this in out ctx]
-;;     (let [reader (transit/reader in :json)
-;;           writer (transit/writer out :json)]
-;;       (->> (transit/read reader)
-;;            ifn
-;;            (transit/write writer))))
-;;   clojure.lang.IFn
-;;   (invoke [this a1]
-;;     (ifn a1)))
+(defn make-lambda
+  [class-name fn-name handler-fn]
+  (defn- -handleRequest [this in out ctx]
+    (let [reader (transit/reader in :json)
+          writer (transit/writer out :json)]
+      (->> (transit/read reader)
+           handler-fn
+           (transit/write writer))))
+  (eval `(gen-class
+          :name ~(-> class-name qualify symbol)
+          :implements [com.amazonaws.services.lambda.runtime.RequestStreamHandler]))
+  (eval `(defn ~(symbol fn-name)
+           [~'data]
+           (with-open [os# (ByteArrayOutputStream. 4096)]
+             (let [writer# (transit/writer os# :json)]
+               (transit/write writer# ~'data)
+               (-> (invoke :function-name ~fn-name
+                           :payload (.toString os#))
+                   (#(if-let [err# (:function-error %)]
+                       (throw (ex-info (str "Lambda error: " err#) %))
+                       %))
+                   :payload
+                   .array
+                   io/input-stream
+                   (transit/reader :json)
+                   transit/read))))))
 
 (defn camel-case
   [fname]
@@ -52,22 +46,9 @@
 
 (defmacro deflambda
   [fname args & body]
-  (let [record-name (symbol (camel-case fname))
-        ctr-sym (symbol (str "->" record-name))]
-    `(do
-       (defrecord ~record-name [ifn#]
-         RequestStreamHandler
-         (~'handleRequest [this# in# out# ctx#]
-          (let [reader# (transit/reader in# :json)
-                writer# (transit/writer out# :json)]
-            (->> (transit/read reader#)
-                 ifn#
-                 (transit/write writer#))))
-         clojure.lang.IFn
-         (~'invoke [this# arg#]
-          (ifn# arg#)))
-       (def ~fname (~ctr-sym (fn ~args ~@body))))))
+  (let [class-name (camel-case fname)]
+    `(make-lambda ~class-name ~(str fname) (fn ~args ~@body))))
 
 (deflambda hello-world
-  [m]
-  (str "Hello, " (:name m) "!"))
+  [data]
+  (str "Hello, " (get data "name") "!"))
