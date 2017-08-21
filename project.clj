@@ -1,4 +1,4 @@
-(defproject lambchops "0.1.3-SNAPSHOT"
+(defproject lambchops "0.1.3"
   :description "An experiment in distributed function invocation."
   :url "https://github.com/cjsauer/lambchops"
   :license {:name "MIT"
