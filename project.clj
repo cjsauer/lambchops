@@ -18,4 +18,4 @@
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]]
-  :aot :all)
+  :profiles {:uberjar {:aot :all}})
