@@ -3,13 +3,17 @@
 A Clojure library designed to experiment with distributed function invocation
 and its benefits.
 
+```
+[lambchops 0.1.5]
+```
+
 ## Usage
 
 ```Clojure
 (ns something.awesome
   (:require [lambchops.core :refer (deflambda)]))
   
-(deflambda hello-world
+(deflambda hello-world :transit
   [data ctx]
   (str "Hello, " (get data "name") "!"))
 ```
@@ -25,10 +29,11 @@ This will do a few things behind the scenes:
   when called.
   
 Serialization and deserialization are handled automatically everywhere you'd
-expect using [Transit](https://github.com/cognitect/transit-clj). When you
-invoke the `hello-world` function above, it executes the remote Lambda function
-and deserializes the return value. The same goes for serialization of the
-arguments passed in.
+expect using [Transit](https://github.com/cognitect/transit-clj) if you specify
+`:transit`, or [Cheshire](https://github.com/dakrone/cheshire) if you specify
+`:json`. When you invoke the `hello-world` function above, it executes the
+remote Lambda function and deserializes the return value. The same goes for
+serialization of the arguments passed in.
 
 ```Clojure
 (hello-world {"name" "Hobbes"})
