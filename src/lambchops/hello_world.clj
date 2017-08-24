@@ -1,7 +1,7 @@
 (ns lambchops.hello-world
   (:require [lambchops.core :refer (deflambda)]))
 
-(deflambda hello-world
-  [data ctx]
+(deflambda hello-world :json
+  [{:strs [name]} ctx]
   (prn ctx)
-  (str "Hello, " (get data "name") "!"))
+  {:greeting (format "Hello, %s!" name)})
