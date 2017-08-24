@@ -10,7 +10,7 @@ and its benefits.
   (:require [lambchops.core :refer (deflambda)]))
   
 (deflambda hello-world
-  [data]
+  [data ctx]
   (str "Hello, " (get data "name") "!"))
 ```
 
