@@ -2,5 +2,6 @@
   (:require [lambchops.core :refer (deflambda)]))
 
 (deflambda hello-world
-  [data]
+  [data ctx]
+  (prn ctx)
   (str "Hello, " (get data "name") "!"))

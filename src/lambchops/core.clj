@@ -17,7 +17,7 @@
            (let [reader# (transit/reader in# :json)
                  writer# (transit/writer out# :json)]
              (->> (transit/read reader#)
-                  ~handler-fn
+                  (#(~handler-fn % ctx#))
                   (transit/write writer#)))))
   (eval `(gen-class
           :name ~(-> class-name qualify symbol)
